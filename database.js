@@ -75,6 +75,32 @@ async function initDatabase() {
       ON CONFLICT (nombre) DO NOTHING
     `);
 
+    // Tabla de variantes de producto (colores, diseños, talles)
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS variantes_producto (
+        id SERIAL PRIMARY KEY,
+        producto_id INTEGER NOT NULL REFERENCES productos(id) ON DELETE CASCADE,
+        nombre VARCHAR(100) NOT NULL,
+        color_hex VARCHAR(7),
+        imagen_url TEXT,
+        stock INTEGER NOT NULL DEFAULT 0 CHECK (stock >= 0),
+        activa BOOLEAN DEFAULT true,
+        orden INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+
+    // Tabla de imágenes adicionales por producto
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS imagenes_producto (
+        id SERIAL PRIMARY KEY,
+        producto_id INTEGER NOT NULL REFERENCES productos(id) ON DELETE CASCADE,
+        imagen_url TEXT NOT NULL,
+        orden INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+
     // Trigger para actualizar updated_at automáticamente
     await client.query(`
       CREATE OR REPLACE FUNCTION update_updated_at()

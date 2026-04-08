@@ -77,6 +77,7 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/productos', require('./routes/productos'));
 app.use('/api/ventas', require('./routes/ventas'));
 app.use('/api/categorias', require('./routes/categorias'));
+app.use('/api/variantes', require('./routes/variantes'));
 
 // ─────────────────────────────────────────────
 // MANEJO DE ERRORES

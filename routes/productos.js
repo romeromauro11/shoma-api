@@ -65,9 +65,22 @@ router.get('/', async (req, res) => {
       [...params, parseInt(limite), offset]
     );
 
+    // Agregar variantes a cada producto
+    const productosConVariantes = await Promise.all(result.rows.map(async (prod) => {
+      const vars = await pool.query(
+        'SELECT id, nombre, color_hex, imagen_url, stock, orden FROM variantes_producto WHERE producto_id = $1 AND activa = true ORDER BY orden ASC',
+        [prod.id]
+      );
+      const imgs = await pool.query(
+        'SELECT imagen_url FROM imagenes_producto WHERE producto_id = $1 ORDER BY orden ASC',
+        [prod.id]
+      );
+      return { ...prod, variantes: vars.rows, imagenes_extra: imgs.rows.map(i => i.imagen_url) };
+    }));
+
     res.json({
       ok: true,
-      productos: result.rows,
+      productos: productosConVariantes,
       paginacion: {
         total,
         pagina: parseInt(pagina),
@@ -97,7 +110,18 @@ router.get('/:id', async (req, res) => {
       return res.status(404).json({ ok: false, error: 'Producto no encontrado' });
     }
 
-    res.json({ ok: true, producto: result.rows[0] });
+    const prod = result.rows[0];
+    const vars = await pool.query(
+      'SELECT id, nombre, color_hex, imagen_url, stock, orden FROM variantes_producto WHERE producto_id = $1 AND activa = true ORDER BY orden ASC',
+      [prod.id]
+    );
+    const imgs = await pool.query(
+      'SELECT imagen_url FROM imagenes_producto WHERE producto_id = $1 ORDER BY orden ASC',
+      [prod.id]
+    );
+    prod.variantes = vars.rows;
+    prod.imagenes_extra = imgs.rows.map(i => i.imagen_url);
+    res.json({ ok: true, producto: prod });
   } catch (err) {
     res.status(500).json({ ok: false, error: 'Error obteniendo producto' });
   }
